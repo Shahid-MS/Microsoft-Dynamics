@@ -73,7 +73,7 @@ var studentMainForm = {
     // Check if the marks are valid
     if (marks != null) {
       // Determine eligibility based on marks
-      var isEligible = marks >= 80 ? 1 : 0; //
+      var isEligible = marks > 80 ? 1 : 0; //
 
       // Set the "Eligible for Scholarship" field with the correct value
       formContext
