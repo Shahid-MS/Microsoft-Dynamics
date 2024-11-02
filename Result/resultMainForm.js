@@ -33,7 +33,7 @@ var resultMainForm = {
           }
         },
         function error(error) {
-          alert("error occured");
+          // alert("error occured");
           console.log(error.message);
         }
       );

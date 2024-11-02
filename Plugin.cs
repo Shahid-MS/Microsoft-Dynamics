@@ -1,11 +1,6 @@
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
-using System.Collections.Generic;
-using System.IdentityModel.Metadata;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace studentedu
 {
@@ -28,35 +23,36 @@ namespace studentedu
                 // Obtain the target entity from the input parameters.  
                 Entity studentEntity = (Entity)context.InputParameters["Target"];
                 tracingService.Trace("Plugin triggered.");
-                if (studentEntity.Contains("ms_coursefee"))
+
+                // Obtain the IOrganizationService instance which you will need for  
+                // web service calls.  
+                IOrganizationServiceFactory serviceFactory =
+                    (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
+                IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
+
+                try
                 {
-                    tracingService.Trace("ms_coursefee is present.");
-                    decimal scholarshipAmount = 0;
-                    Money courseFeeMoney = (Money)studentEntity["ms_coursefee"];
-                    decimal courseFee = courseFeeMoney.Value;
-                    // Obtain the IOrganizationService instance which you will need for  
-                    // web service calls.  
-                    IOrganizationServiceFactory serviceFactory =
-                        (IOrganizationServiceFactory)serviceProvider.GetService(typeof(IOrganizationServiceFactory));
-                    IOrganizationService service = serviceFactory.CreateOrganizationService(context.UserId);
-                    try
+                    Guid studentId = studentEntity.Id;
+
+                    ColumnSet columns = new ColumnSet("ms_thmarksin", "ms_coursefee");
+                    Entity retrievedStudent = service.Retrieve("ms_student", studentId, columns);
+                    if (retrievedStudent != null)
                     {
-                        Guid studentId = studentEntity.Id;
-
-                        ColumnSet columns = new ColumnSet("ms_thmarksin");
-                        Entity retrievedStudent = service.Retrieve("ms_student", studentId, columns);
-
-                        if (retrievedStudent != null && retrievedStudent.Contains("ms_thmarksin"))
+                        if (retrievedStudent.Contains("ms_thmarksin") && retrievedStudent.Contains("ms_coursefee"))
                         {
-                            tracingService.Trace("ms_thmarksin retrieved.");
+                            tracingService.Trace("ms_thmarksin retrieved and ms_coursefee retrieved.");
+
                             int marks = (int)retrievedStudent["ms_thmarksin"];
+                            Money courseFeeMoney = (Money)retrievedStudent["ms_coursefee"];
+                            decimal courseFee = courseFeeMoney.Value;
+                            decimal scholarshipAmount = 0;
 
                             if (marks > 90)
                             {
                                 scholarshipAmount = courseFee * 0.4m;
                                 tracingService.Trace($"Scholarship set to 40%. Amount: {scholarshipAmount}");
                             }
-                            else if (marks < 90 && marks > 80)
+                            else if (marks <= 90 && marks > 80)
                             {
                                 scholarshipAmount = courseFee * 0.2m;
                                 tracingService.Trace($"Scholarship set to 20%. Amount: {scholarshipAmount}");
@@ -65,9 +61,6 @@ namespace studentedu
                             {
                                 tracingService.Trace("Marks below 80, no scholarship awarded.");
                             }
-                       
-
-
                             Entity updateStudent = new Entity("ms_student", studentEntity.Id);
                             updateStudent["ms_scholarshipamount"] = scholarshipAmount;
                             tracingService.Trace("Updating scholarship amount");
@@ -76,22 +69,20 @@ namespace studentedu
                         }
                         else
                         {
-                            tracingService.Trace("ms_thmarksin field not found.");
+                            tracingService.Trace("Either ms_thmarksin or ms_coursefee is not present.");
                         }
 
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        tracingService.Trace("Scholarship Amount", ex.ToString());
-                        throw;
+                        tracingService.Trace("Student entity not found.");
                     }
-
                 }
-                else
+                catch (Exception ex)
                 {
-                    tracingService.Trace("ms_coursefee is not present in the target entity.");
+                    tracingService.Trace("Scholarship Amount", ex.ToString());
+                    throw;
                 }
-
         
             }
 

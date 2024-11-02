@@ -9,15 +9,15 @@ var studentMainForm = {
     //Calculate Duration Field
     this.courseDurationAndFee();
     //Scholarship Eligibility
-    this.checkScholarshipEligibility();
+    // this.checkScholarshipEligibility();
   },
 
-  onSave: function (executionContext) {
-    formContext = executionContext.getFormContext();
-    formMode = formContext.ui.getFormType();
+  // onSave: function (executionContext) {
+  //   formContext = executionContext.getFormContext();
+  //   formMode = formContext.ui.getFormType();
 
-    this.checkScholarshipEligibility();
-  },
+  //   this.checkScholarshipEligibility();
+  // },
 
 
 
